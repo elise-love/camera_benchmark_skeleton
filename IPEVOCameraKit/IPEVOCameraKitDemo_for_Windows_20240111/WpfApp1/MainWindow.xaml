@@ -1,0 +1,387 @@
+﻿<Window
+    x:Class="com.ipevo.windows.demo.WpfApp1.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:com.ipevo.windows.demo.WpfApp1"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:winform="clr-namespace:System.Windows.Forms;assembly=System.Windows.Forms"
+    Title="IPEVO Document Camera API Demo Code"
+    Width="800"
+    Height="500"
+    MinWidth="600"
+    MinHeight="600"
+    Closed="Window_Closed"
+    mc:Ignorable="d">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="600*" />
+            <ColumnDefinition Width="400" />
+        </Grid.ColumnDefinitions>
+
+        <!--  Camera View  -->
+        <Image
+            x:Name="DisplayStreamImage"
+            Grid.Row="0"
+            RenderTransformOrigin="0.5,0.5">
+            <Image.RenderTransform>
+                <TransformGroup>
+                    <RotateTransform Angle="-180" />
+                    <ScaleTransform ScaleX="-1" />
+                </TransformGroup>
+            </Image.RenderTransform>
+        </Image>
+
+        <!--  Camera Info/Control  -->
+        <Grid Grid.Column="1" Background="#FF000000">
+            <StackPanel Margin="10,5">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="130" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="40" />
+                        <RowDefinition Height="40" />
+                    </Grid.RowDefinitions>
+
+                    <!--  Device  -->
+                    <Label
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Content="Select Video Device"
+                        Foreground="#FFFFFFFF" />
+                    <ComboBox
+                        x:Name="DevicesComboBox"
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        Height="25"
+                        SelectionChanged="DevicesComboBox_SelectionChanged">
+                        <ComboBox.ToolTip>
+                            <ToolTip DataContext="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Self}}">
+                                <TextBlock Text="{Binding SelectionBoxItem}" />
+                            </ToolTip>
+                        </ComboBox.ToolTip>
+                    </ComboBox>
+
+                    <!--  Resolution  -->
+                    <Label
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Content="Camera Resolution"
+                        Foreground="#FFFFFFFF" />
+                    <ComboBox
+                        x:Name="ResolutionComboBox"
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        Height="25"
+                        SelectionChanged="ResolutionComboBox_SelectionChanged" />
+                </Grid>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition x:Name="Row" Height="40*" />
+                        <RowDefinition Height="{Binding ElementName=Row, Path=Height}" />
+                        <RowDefinition Height="{Binding ElementName=Row, Path=Height}" />
+                        <RowDefinition Height="{Binding ElementName=Row, Path=Height}" />
+                    </Grid.RowDefinitions>
+
+                    <!--  Exposure  -->
+                    <Label
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Content="AE"
+                        Foreground="#FFFFFFFF"
+                        Visibility="{Binding ElementName=ExposureSlider, Path=Visibility}" />
+                    <StackPanel
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal">
+                        <CheckBox
+                            x:Name="AELockCheckBox"
+                            VerticalAlignment="Center"
+                            Click="AELockCheckBox_Click"
+                            Content="Lock"
+                            Foreground="#FFFFFFFF"
+                            Visibility="{Binding ElementName=ExposureSlider, Path=Visibility}" />
+                        <Slider
+                            x:Name="ExposureSlider"
+                            Width="250"
+                            Margin="20,0,0,0"
+                            Foreground="#FFFFFFFF"
+                            IsMoveToPointEnabled="True"
+                            IsSnapToTickEnabled="True"
+                            TickPlacement="TopLeft"
+                            ValueChanged="ExposureSlider_ValueChanged" />
+                    </StackPanel>
+
+                    <!--  White Balance  -->
+                    <Label
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Content="WB"
+                        Foreground="#FFFFFFFF"
+                        Visibility="{Binding ElementName=WhiteBalanceSlider, Path=Visibility}" />
+                    <StackPanel
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        Orientation="Horizontal">
+                        <CheckBox
+                            x:Name="WhiteBalanceLockCheckBox"
+                            VerticalAlignment="Center"
+                            Click="WhiteBalanceLockCheckBox_Click"
+                            Content="Lock"
+                            Foreground="#FFFFFFFF"
+                            Visibility="{Binding ElementName=WhiteBalanceSlider, Path=Visibility}" />
+                        <Slider
+                            x:Name="WhiteBalanceSlider"
+                            Width="250"
+                            Margin="20,0,0,0"
+                            VerticalAlignment="Center"
+                            IsMoveToPointEnabled="True"
+                            IsSnapToTickEnabled="True"
+                            ValueChanged="WhiteBalanceSlider_ValueChanged" />
+                    </StackPanel>
+
+                    <!--  Device Zoom Level  -->
+                    <Label
+                        Grid.Row="2"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Content="Zoom"
+                        Foreground="#FFFFFFFF"
+                        Visibility="{Binding ElementName=ZoomSlider, Path=Visibility}" />
+                    <Slider
+                        x:Name="ZoomSlider"
+                        Grid.Row="2"
+                        Grid.Column="1"
+                        Width="300"
+                        VerticalAlignment="Center"
+                        IsMoveToPointEnabled="True"
+                        ValueChanged="ZoomSlider_ValueChanged" />
+
+                    <!--  Auto/Manual Focus  -->
+                    <Label
+                        Grid.Row="3"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Content="AF/MF"
+                        Foreground="#FFFFFFFF"
+                        Visibility="{Binding ElementName=FocusSlider, Path=Visibility}" />
+                    <Slider
+                        x:Name="FocusSlider"
+                        Grid.Row="3"
+                        Grid.Column="1"
+                        Width="300"
+                        VerticalAlignment="Center"
+                        IsMoveToPointEnabled="True"
+                        ValueChanged="FocusSlider_ValueChanged" />
+                </Grid>
+
+                <StackPanel MinHeight="30" Orientation="Horizontal">
+                    <Button
+                        x:Name="FocusButton"
+                        MinWidth="80"
+                        Margin="0,0,10,0"
+                        HorizontalAlignment="Left"
+                        Click="FocusButton_Click"
+                        Content="Focus" />
+                    <Button
+                        x:Name="SnapshotButton"
+                        MinWidth="80"
+                        HorizontalAlignment="Left"
+                        Click="SnapshotButton_Click"
+                        Content="Snapshot" />
+
+                    <Label Grid.Row="0"
+                           Grid.Column="0"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Center"
+                           Content="LED"
+                           Foreground="#FFFFFFFF"
+                           Visibility="{Binding ElementName=LedCheckBox, Path=Visibility}" />
+                    <CheckBox
+                            x:Name="LedCheckBox"
+                            VerticalAlignment="Center"
+                            Click="LedCheckBox_Click"
+                            Content="Lock"
+                            Foreground="#FFFFFFFF" />
+                </StackPanel>
+
+                <!--  Adjust Image  -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="230" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="{Binding ElementName=Row, Path=Height}" />
+                        <RowDefinition Height="{Binding ElementName=Row, Path=Height}" />
+                        <RowDefinition Height="{Binding ElementName=Row, Path=Height}" />
+                        <RowDefinition Height="{Binding ElementName=Row, Path=Height}" />
+                        <RowDefinition Height="{Binding ElementName=Row, Path=Height}" />
+                        <RowDefinition Height="{Binding ElementName=Row, Path=Height}" />
+                        <RowDefinition Height="{Binding ElementName=Row, Path=Height}" />
+                        <RowDefinition Height="{Binding ElementName=Row, Path=Height}" />
+                    </Grid.RowDefinitions>
+                    <!--  Firmware Version  -->
+                    <Label
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Content="FW Version"
+                        ContentStringFormat="{}{0}:"
+                        Foreground="#FFFFFFFF" />
+                    <Label
+                        x:Name="FirmwareVersionLabel"
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Foreground="#FFFFFFFF" />
+                    <!--  Brightness  -->
+                    <Label
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Content="Brightness"
+                        ContentStringFormat="{}{0}:"
+                        Foreground="#FFFFFFFF" />
+                    <Slider
+                        x:Name="BrightnessSlider"
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        IsMoveToPointEnabled="True"
+                        IsSnapToTickEnabled="True"
+                        ValueChanged="BrightnessSlider_ValueChanged" />
+                    <!--  Contrast  -->
+                    <Label
+                        Grid.Row="2"
+                        Grid.Column="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Content="Contrast"
+                        ContentStringFormat="{}{0}:"
+                        Foreground="#FFFFFFFF" />
+                    <Slider
+                        x:Name="ContrastSlider"
+                        Grid.Row="2"
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        IsMoveToPointEnabled="True"
+                        IsSnapToTickEnabled="True"
+                        ValueChanged="ContrastSlider_ValueChanged" />
+                    <!--  Gamma  -->
+                    <Label
+                        Grid.Row="3"
+                        Grid.Column="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Content="Gamma"
+                        ContentStringFormat="{}{0}:"
+                        Foreground="#FFFFFFFF" />
+                    <Slider
+                        x:Name="GammaSlider"
+                        Grid.Row="3"
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        IsMoveToPointEnabled="True"
+                        IsSnapToTickEnabled="True"
+                        ValueChanged="GammaSlider_ValueChanged" />
+                    <!--  Hue  -->
+                    <Label
+                        Grid.Row="4"
+                        Grid.Column="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Content="Hue"
+                        ContentStringFormat="{}{0}:"
+                        Foreground="#FFFFFFFF" />
+                    <Slider
+                        x:Name="HueSlider"
+                        Grid.Row="4"
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        IsMoveToPointEnabled="True"
+                        IsSnapToTickEnabled="True"
+                        ValueChanged="HueSlider_ValueChanged" />
+                    <!--  Saturation  -->
+                    <Label
+                        Grid.Row="5"
+                        Grid.Column="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Content="Saturation"
+                        ContentStringFormat="{}{0}:"
+                        Foreground="#FFFFFFFF" />
+                    <Slider
+                        x:Name="Saturationlider"
+                        Grid.Row="5"
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        IsMoveToPointEnabled="True"
+                        IsSnapToTickEnabled="True"
+                        ValueChanged="Saturationlider_ValueChanged" />
+                    <!--  Sharpness  -->
+                    <Label
+                        Grid.Row="6"
+                        Grid.Column="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Content="Sharpness"
+                        ContentStringFormat="{}{0}:"
+                        Foreground="#FFFFFFFF" />
+                    <Slider
+                        x:Name="SharpnessSlider"
+                        Grid.Row="6"
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        IsMoveToPointEnabled="True"
+                        IsSnapToTickEnabled="True"
+                        ValueChanged="SharpnessSlider_ValueChanged" />
+                    <Button
+                        x:Name="ImageAdjustResetButton"
+                        Grid.Row="7"
+                        Grid.ColumnSpan="2"
+                        MinWidth="60"
+                        MinHeight="30"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Click="ImageAdjustResetButton_Click"
+                        Content="Reset" />
+                </Grid>
+                <Border
+                    Height="30"
+                    Margin="10"
+                    Background="#FFFFFFFF"
+                    BorderBrush="#FF333333"
+                    BorderThickness="2">
+                    <TextBlock
+                        x:Name="DeviceMessageTextBlock"
+                        Margin="5,0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center" />
+                </Border>
+
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

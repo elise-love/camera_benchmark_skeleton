@@ -1,0 +1,68 @@
+# Local editor and tool state
+.vs/
+.vscode/
+.idea/
+.agents/
+.codex/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Build and packaging output
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+
+# Jupyter/IPython
+.ipynb_checkpoints/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+Thumbs.db
+Desktop.ini
+
+# Generated IQA outputs and local datasets
+**/data_image/
+**/*_scores.csv
+**/*_score.csv
+**/metrics.csv
+
+# Model checkpoints, weights, and large numeric artifacts
+*.ckpt
+*.h5
+*.hdf5
+*.onnx
+*.pb
+*.pth
+*.pt
+*.pkl
+*.pickle
+*.joblib
+*.npy
+*.npz
+*.mat
+
+# Keep placeholder files if you intentionally add empty output/data dirs
+!.gitkeep

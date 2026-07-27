@@ -1,0 +1,39 @@
+# 拍照 Benchmark 骨架模組 — 完全獨立的 requirements，不用裝 take_pic_benchmark_tainan 那邊
+# 的任何東西（CameraKit.dll、scoring_system 都已經複製一份在本模組底下）。
+# 不需要 PyQt。這份會比原本正式系統的 requirements.txt 重一點，因為評分模型
+# （NIMA/MUSIQ 用 TensorFlow，舊版 NIMA/DeepLPF 腳本用 PyTorch）也內附進來了。
+
+numpy==1.26.4
+opencv-contrib-python==4.10.0.84
+Pillow==10.4.0
+
+# 拍照間隔/曝光/白平衡的線上參數搜尋（TPE）
+optuna>=3.6
+
+# terminal 大字看板
+pyfiglet
+colorama
+
+# 只有要用 CameraKit 後端（白平衡可調）才需要；純 OpenCV 後端或 --mock 不需要。
+# Windows 另需 .NET Framework。
+pythonnet>=3.0
+
+# ── 以下對應本模組內附的 scoring_system/（評分：NIQE/BRISQUE/NIMA/MUSIQ）──
+# 跟 scoring_system 原本在正式系統那邊用的 requirements-scoring.txt 一致。
+
+# 傳統指標：BRISQUE、IL-NIQE
+scipy
+scikit-image
+libsvm-official
+
+# TensorFlow 指標：NIMA、MUSIQ
+tensorflow
+tensorflow-hub
+
+# scoring_system/ 底下舊版 PyTorch NIMA/DeepLPF 腳本用到的依賴
+torch
+torchvision
+tensorboard
+matplotlib
+imageio
+tqdm

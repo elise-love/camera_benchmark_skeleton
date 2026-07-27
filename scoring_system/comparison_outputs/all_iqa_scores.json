@@ -1,0 +1,57 @@
+{
+  "input": "C:\\Users\\User\\Desktop\\take_pic_benchmark_tainan\\scoring_system\\data",
+  "metrics": [
+    "niqe",
+    "ilniqe",
+    "brisque",
+    "musiq",
+    "nima"
+  ],
+  "count": 2,
+  "results": [
+    {
+      "image": "office_20260702_variant_001.jpg",
+      "path": "C:\\Users\\User\\Desktop\\take_pic_benchmark_tainan\\scoring_system\\data\\office_20260702_variant_001.jpg",
+      "seconds_total": 279.598,
+      "niqe_score": 11.417748,
+      "niqe_seconds": 0.26,
+      "niqe_error": "",
+      "ilniqe_score": 32.176478,
+      "ilniqe_seconds": 53.673,
+      "ilniqe_error": "",
+      "brisque_score": 61.034237,
+      "brisque_seconds": 0.666,
+      "brisque_error": "",
+      "musiq_score": 42.27142,
+      "musiq_seconds": 9.095,
+      "musiq_error": "",
+      "nima_score": 5.965322,
+      "nima_seconds": 0.634,
+      "nima_error": "",
+      "nima_std": 2.683009,
+      "nima_distribution": "[0.02580581, 0.11033411, 0.10630779, 0.07917159, 0.10420733, 0.13829853, 0.11168751, 0.07591313, 0.13944863, 0.10882553]"
+    },
+    {
+      "image": "office_20260702_variant_002.jpg",
+      "path": "C:\\Users\\User\\Desktop\\take_pic_benchmark_tainan\\scoring_system\\data\\office_20260702_variant_002.jpg",
+      "seconds_total": 279.598,
+      "niqe_score": 11.110812,
+      "niqe_seconds": 0.215,
+      "niqe_error": "",
+      "ilniqe_score": 37.999873,
+      "ilniqe_seconds": 52.814,
+      "ilniqe_error": "",
+      "brisque_score": 77.821192,
+      "brisque_seconds": 0.724,
+      "brisque_error": "",
+      "musiq_score": 42.691963,
+      "musiq_seconds": 1.046,
+      "musiq_error": "",
+      "nima_score": 5.930801,
+      "nima_seconds": 0.101,
+      "nima_error": "",
+      "nima_std": 2.69335,
+      "nima_distribution": "[0.02527441, 0.11306103, 0.10501856, 0.08901043, 0.10479061, 0.13309145, 0.10968129, 0.0800254, 0.12263522, 0.11741162]"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+source_image,output_image,brightness,contrast,saturation,hue_shift,gamma,temperature
+manual_20260529_110514_803.png,manual_20260529_110514_803_variant_001.png,0.0000,0.9667,0.8700,-5.7143,0.8500,-12.6923
+manual_20260529_110514_803.png,manual_20260529_110514_803_variant_002.png,-15.0000,1.1333,0.9900,-3.4286,0.9000,-10.3846
+manual_20260529_110514_803.png,manual_20260529_110514_803_variant_003.png,15.0000,0.8556,1.1100,-1.1429,0.9500,-8.0769
