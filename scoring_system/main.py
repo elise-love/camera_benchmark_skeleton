@@ -347,10 +347,14 @@ def score_images(image_paths, input_root, metrics, args):
                     flush=True,
                 )
             except Exception as exc:
-                row[f"{metric}_seconds"] = round(time.perf_counter() - start, 3)
-                row[f"{metric}_error"] = f"{type(exc).__name__}: {exc}"
-                print(f"  [{index}/{len(image_paths)}] {image_path.name}: ERROR", flush=True)
+                message = f"{type(exc).__name__}: {exc}"
+                row[f"{metric}_error"] = message
 
+                print(
+                    f"  [{index}/{len(image_paths)}] "
+                    f"{image_path.name}: ERROR - {message}",
+                    flush=True,
+                )
     return rows
 
 

@@ -4,3 +4,17 @@ obj/
 __pycache__/ 
 *.pyc 
 *.user 
+# TensorFlow Hub 模型快取
+.tfhub_cache/
+
+
+# VS Code 個人設定
+.vscode/
+
+# Python 快取
+__pycache__/
+*.pyc
+
+# 臨時輸出
+*.csv
+*.jsonl
