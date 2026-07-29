@@ -116,7 +116,9 @@ class CameraKitCamera:
             raw = (ctypes.c_ubyte * bufferLength).from_address(addr)
             arr = np.frombuffer(raw, dtype=np.uint8).copy()
             if arr.size == self.width * self.height * 4:
-                bgr = arr.reshape((self.height, self.width, 4))[:, :, :3]
+                # CameraKit streams BGR32 rows in bottom-up bitmap order.
+                # Normalize it here so preview, raw capture, and processed output share the same orientation.
+                bgr = arr.reshape((self.height, self.width, 4))[::-1, :, :3].copy()
                 with self._lock:
                     self._latest = bgr
         except Exception:

@@ -32,7 +32,7 @@ from data_store import SessionStore
 from filters import FilterParams
 from optimizer_session import OptunaSession
 from preview_window import FrameHub, PreviewWindow
-from scoring_client import ScoringClient, build_scorer
+from scoring_client import ScoringClient, build_scorer, estimate_color_health_rgb
 
 # Windows 的舊版 cmd.exe 預設 codepage 常常不是 UTF-8，中文狀態文字會變亂碼；
 # 這裡盡量把 stdout 轉成 UTF-8，轉不了（極少數環境）就算了，不影響程式運作。
@@ -83,6 +83,11 @@ def _ask_shot_count() -> int:
         sd.line("請輸入一個正整數。", "warn")
 
 
+def _safe_capture_fallback(backend) -> dict:
+    fallback = config.SAFE_CAPTURE_FALLBACKS.get(getattr(backend, "kind", ""), {})
+    return config.clip_capture_params(fallback, backend.camera_axes())
+
+
 def preflight_check(scorer: ScoringClient, backend) -> None:
     """開跑前先確認評分系統至少能回傳一個指標，避免拍到一半才發現評分系統壞掉。"""
     sd.line("評分系統預檢中…", "info")
@@ -110,6 +115,19 @@ def run_shot(shot_index: int, total: int, session: SessionStore,
     capture_cfg = OptunaSession.split_capture(candidate)
     if capture_cfg:
         backend.set_capture(capture_cfg)
+        probe = hub.get_latest_bgr()
+        if probe is not None:
+            probe_rgb = cv2.cvtColor(probe, cv2.COLOR_BGR2RGB)
+            color_health = estimate_color_health_rgb(probe_rgb)
+            if color_health < config.PRE_CAPTURE_MIN_COLOR_HEALTH:
+                fallback = _safe_capture_fallback(backend)
+                if fallback:
+                    sd.line(
+                        f"候選參數色彩健康度過低 ({color_health:.2f})，改用安全曝光/白平衡。",
+                        "warn",
+                    )
+                    backend.set_capture(fallback)
+                    candidate.setdefault("capture", {}).update(fallback)
     filt = _filter_params_from(candidate)
     preview.set_filter_params(filt)
     preview.set_caption(f"Shot {shot_index}/{total} - Preparing")

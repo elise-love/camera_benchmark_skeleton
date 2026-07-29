@@ -45,12 +45,12 @@ DEFAULT_CAMERA_PROFILE = {
 # 這些範圍刻意保守，避免 Optuna 為了追分把照片推到不可用的極端狀態。
 # tuple 格式固定為：(型別, 最小值, 最大值)
 OPENCV_CAMERA_AXES = {
-    "capture.exposure": ("float", -11.0, -3.0),
+    "capture.exposure": ("float", -8.0, -5.0),
 }
 
 CAMERAKIT_CAMERA_AXES = {
-    "capture.exposure": ("int", 1, 15),
-    "capture.white_balance": ("int", 2200, 7500),
+    "capture.exposure": ("int", 5, 11),
+    "capture.white_balance": ("int", 3800, 5200),
 }
 
 # 非搜尋軸也要有保護；例如手動載入舊參數或直接呼叫 set_capture() 時仍會套用。
@@ -61,12 +61,35 @@ CAPTURE_PARAM_RANGES = {
 
 # 後製（濾鏡）搜尋軸，與相機後端無關
 FILTER_AXES = {
-    "filters.saturation":  ("float", 0.75, 1.35),
-    "filters.gamma":       ("float", 0.80, 1.35),
-    "filters.brightness":  ("float", -30.0, 30.0),
-    "filters.contrast":    ("float", 0.80, 1.30),
-    "filters.temperature": ("float", -15.0, 15.0),
-    "filters.hue_shift":   ("float", -8.0, 8.0),
+    "filters.saturation":  ("float", 0.85, 1.20),
+    "filters.gamma":       ("float", 0.90, 1.20),
+    "filters.brightness":  ("float", -15.0, 15.0),
+    "filters.contrast":    ("float", 0.90, 1.20),
+    "filters.temperature": ("float", -6.0, 6.0),
+    "filters.hue_shift":   ("float", -3.0, 3.0),
+}
+
+COLOR_HEALTH = {
+    "min_score": 0.25,
+    "cast_free_spread": 0.18,
+    "cast_bad_spread": 0.80,
+    "brightness_low": 70.0,
+    "brightness_high": 190.0,
+    "brightness_bad_low": 40.0,
+    "brightness_bad_high": 225.0,
+    "clip_free_fraction": 0.18,
+    "clip_bad_fraction": 0.35,
+}
+
+PRE_CAPTURE_MIN_COLOR_HEALTH = 0.45
+SAFE_CAPTURE_FALLBACKS = {
+    "camerakit": {
+        "exposure": 8,
+        "white_balance": 4600,
+    },
+    "opencv": {
+        "exposure": -6.5,
+    },
 }
 
 PARAMETER_RANGES = {
@@ -111,7 +134,15 @@ def clip_nested_params(params: dict, extra_ranges: dict | None = None) -> dict:
         value, exists = _get_path(clipped, path)
         if exists and value is not None:
             _set_path(clipped, path, clip_parameter_value(value, spec))
+    _normalize_capture_mode(clipped.get("capture", {}))
     return clipped
+
+
+def _normalize_capture_mode(capture: dict) -> None:
+    if capture.get("exposure") is not None:
+        capture["auto_exposure"] = False
+    if capture.get("white_balance") is not None:
+        capture["auto_wb"] = False
 
 
 def clip_capture_params(params: dict, camera_axes: dict | None = None) -> dict:
@@ -124,6 +155,7 @@ def clip_capture_params(params: dict, camera_axes: dict | None = None) -> dict:
     for key, spec in ranges.items():
         if clipped.get(key) is not None:
             clipped[key] = clip_parameter_value(clipped[key], spec)
+    _normalize_capture_mode(clipped)
     return clipped
 
 

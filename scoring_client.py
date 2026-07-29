@@ -17,6 +17,7 @@ import tempfile
 import subprocess
 
 import numpy as np
+from PIL import Image
 
 import config
 
@@ -53,6 +54,72 @@ def normalize_scores(scores: dict, weights: dict | None = None) -> float:
         raise ValueError("scores 裡沒有任何可辨識的指標")
     total_w = sum(w.get(k, 0.0) for k in norms) or 1.0
     return round(sum(norms[k] * w.get(k, 0.0) for k in norms) / total_w, 4)
+
+
+def _ramp_penalty(value: float, good: float, bad: float) -> float:
+    if value <= good:
+        return 0.0
+    if value >= bad:
+        return 1.0
+    return (value - good) / (bad - good)
+
+
+def _outside_penalty(value: float, good_lo: float, good_hi: float,
+                     bad_lo: float, bad_hi: float) -> float:
+    if good_lo <= value <= good_hi:
+        return 0.0
+    if value < good_lo:
+        return _ramp_penalty(good_lo - value, 0.0, good_lo - bad_lo)
+    return _ramp_penalty(value - good_hi, 0.0, bad_hi - good_hi)
+
+
+def estimate_color_health_rgb(rgb_array: np.ndarray) -> float:
+    """Return 0~1 color usability score; lower means severe cast/exposure issues."""
+    cfg = config.COLOR_HEALTH
+    arr = np.asarray(rgb_array, dtype=np.float32)
+    if arr.ndim != 3 or arr.shape[2] != 3:
+        raise ValueError("estimate_color_health_rgb expects RGB image (HxWx3).")
+    step_y = max(1, arr.shape[0] // 180)
+    step_x = max(1, arr.shape[1] // 320)
+    arr = arr[::step_y, ::step_x, :]
+
+    luma = arr.mean(axis=2)
+    midtone = arr[(luma > 35.0) & (luma < 235.0)]
+    means = (midtone.reshape(-1, 3).mean(axis=0)
+             if len(midtone) else arr.reshape(-1, 3).mean(axis=0))
+    mean_luma = float(arr.reshape(-1, 3).mean(axis=0).mean())
+    channel_spread = float((means.max() - means.min()) / max(mean_luma, 1.0))
+    cast_penalty = _ramp_penalty(
+        channel_spread,
+        cfg["cast_free_spread"],
+        cfg["cast_bad_spread"],
+    )
+
+    brightness_penalty = _outside_penalty(
+        mean_luma,
+        cfg["brightness_low"],
+        cfg["brightness_high"],
+        cfg["brightness_bad_low"],
+        cfg["brightness_bad_high"],
+    )
+
+    clip_fraction = float((arr >= 252.0).mean())
+    clip_penalty = _ramp_penalty(
+        clip_fraction,
+        cfg["clip_free_fraction"],
+        cfg["clip_bad_fraction"],
+    )
+
+    penalty = max(cast_penalty, brightness_penalty, clip_penalty)
+    health = 1.0 - penalty
+    return round(max(cfg["min_score"], min(1.0, health)), 4)
+
+
+def estimate_color_health(path: str) -> float:
+    with Image.open(path) as image:
+        rgb = image.convert("RGB")
+        rgb.thumbnail((320, 180))
+        return estimate_color_health_rgb(np.asarray(rgb, dtype=np.float32))
 
 
 class ScoringSystemBackend:
@@ -136,8 +203,14 @@ class ScoringClient:
         raw = self.backend.run_folder(folder)
         result = {}
         for fname, scores in raw.items():
-            result[fname] = {"scores": scores,
-                             "objective_score": normalize_scores(scores, self.weights)}
+            path = os.path.join(folder, fname) if os.path.isdir(folder) else folder
+            color_health = estimate_color_health(path)
+            scores = {**scores, "color_health": color_health}
+            base_score = normalize_scores(scores, self.weights)
+            result[fname] = {
+                "scores": scores,
+                "objective_score": round(base_score * color_health, 4),
+            }
         return result
 
     def score_one(self, path: str) -> dict:
@@ -146,7 +219,10 @@ class ScoringClient:
         if not raw:
             raise RuntimeError(f"評分系統沒有回傳任何結果：{path}")
         scores = next(iter(raw.values()))
-        return {"scores": scores, "objective_score": normalize_scores(scores, self.weights)}
+        color_health = estimate_color_health(path)
+        scores = {**scores, "color_health": color_health}
+        base_score = normalize_scores(scores, self.weights)
+        return {"scores": scores, "objective_score": round(base_score * color_health, 4)}
 
 
 def build_scorer(use_mock: bool) -> ScoringClient:
