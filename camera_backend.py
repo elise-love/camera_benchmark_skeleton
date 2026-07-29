@@ -20,13 +20,14 @@ class OpenCVBackend:
         self.cap = cc.open_camera(index)
 
     def camera_axes(self):
-        return {"capture.exposure": ("float", -11.0, -3.0)}   # 無白平衡軸
+        return dict(config.OPENCV_CAMERA_AXES)   # 無白平衡搜尋軸
 
     def reference_capture(self):
         return {"auto_exposure": 0.75, "auto_wb": 1}
 
     def set_capture(self, d: dict, settle_s: float = 0.5):
-        self._cc.apply_capture_params(self.cap, d, settle_s=settle_s)
+        safe = config.clip_capture_params(d, self.camera_axes())
+        self._cc.apply_capture_params(self.cap, safe, settle_s=settle_s)
 
     def read(self):
         return self.cap.read()
@@ -46,14 +47,14 @@ class CameraKitBackend:
         self.cam = CameraKitCamera(index)
 
     def camera_axes(self):
-        return {"capture.exposure":      ("int", 1, 15),
-                "capture.white_balance": ("float", 2200.0, 7500.0)}
+        return dict(config.CAMERAKIT_CAMERA_AXES)
 
     def reference_capture(self):
         return {"auto_exposure": True, "auto_wb": True}
 
     def set_capture(self, d: dict, settle_s: float = 0.6):
-        self.cam.set_capture(d, settle_s=settle_s)
+        safe = config.clip_capture_params(d, self.camera_axes())
+        self.cam.set_capture(safe, settle_s=settle_s)
 
     def read(self):
         return self.cam.read()
@@ -75,7 +76,7 @@ class MockBackend:
         self._t = 0
 
     def camera_axes(self):
-        return {"capture.exposure": ("float", -11.0, -3.0)}
+        return dict(config.OPENCV_CAMERA_AXES)
 
     def reference_capture(self):
         return {"auto_exposure": 0.75, "auto_wb": 1}

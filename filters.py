@@ -10,6 +10,8 @@ from dataclasses import dataclass
 import cv2
 import numpy as np
 
+import config
+
 
 @dataclass
 class FilterParams:
@@ -20,6 +22,18 @@ class FilterParams:
     gamma: float = 1.0
     temperature: float = 0.0
     enum: str = "none"
+
+
+def clip_filter_params(p: FilterParams) -> FilterParams:
+    values = config.clip_filter_params({
+        "brightness": p.brightness,
+        "contrast": p.contrast,
+        "saturation": p.saturation,
+        "hue_shift": p.hue_shift,
+        "gamma": p.gamma,
+        "temperature": p.temperature,
+    })
+    return FilterParams(enum=p.enum, **values)
 
 
 def _apply_gamma(bgr: np.ndarray, gamma: float) -> np.ndarray:
@@ -34,6 +48,7 @@ def apply_filters_rgba(rgba: np.ndarray, p: FilterParams) -> np.ndarray:
     """rgba: HxWx4 uint8 → 回傳同尺寸 HxWx4 uint8。"""
     if rgba is None:
         return rgba
+    p = clip_filter_params(p)
     if rgba.dtype != np.uint8:
         rgba = rgba.astype(np.uint8, copy=False)
     if rgba.ndim != 3 or rgba.shape[2] != 4:

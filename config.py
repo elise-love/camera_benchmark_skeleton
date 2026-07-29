@@ -7,6 +7,7 @@ CameraKit.dll 的資產（IPEVOCameraKit/）跟評分模型（scoring_system/）
 
 from __future__ import annotations
 
+import copy
 import os
 
 MODULE_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -40,14 +41,103 @@ DEFAULT_CAMERA_PROFILE = {
     },
 }
 
+# ── 參數安全範圍 ─────────────────────────────────────────────────────
+# 這些範圍刻意保守，避免 Optuna 為了追分把照片推到不可用的極端狀態。
+# tuple 格式固定為：(型別, 最小值, 最大值)
+OPENCV_CAMERA_AXES = {
+    "capture.exposure": ("float", -11.0, -3.0),
+}
+
+CAMERAKIT_CAMERA_AXES = {
+    "capture.exposure": ("int", 1, 15),
+    "capture.white_balance": ("int", 2200, 7500),
+}
+
+# 非搜尋軸也要有保護；例如手動載入舊參數或直接呼叫 set_capture() 時仍會套用。
+CAPTURE_PARAM_RANGES = {
+    "capture.white_balance": ("int", 2200, 7500),
+    "capture.gain": ("float", 0.0, 255.0),
+}
+
 # 後製（濾鏡）搜尋軸，與相機後端無關
 FILTER_AXES = {
-    "filters.saturation":  ("float", 0.5, 2.0),
-    "filters.gamma":       ("float", 0.5, 2.5),
+    "filters.saturation":  ("float", 0.75, 1.35),
+    "filters.gamma":       ("float", 0.80, 1.35),
     "filters.brightness":  ("float", -30.0, 30.0),
-    "filters.contrast":    ("float", 0.3, 2.0),
-    "filters.temperature": ("float", -20.0, 20.0),
+    "filters.contrast":    ("float", 0.80, 1.30),
+    "filters.temperature": ("float", -15.0, 15.0),
+    "filters.hue_shift":   ("float", -8.0, 8.0),
 }
+
+PARAMETER_RANGES = {
+    **CAPTURE_PARAM_RANGES,
+    **FILTER_AXES,
+}
+
+
+def _get_path(d: dict, path: str):
+    cur = d
+    for key in path.split("."):
+        if not isinstance(cur, dict) or key not in cur:
+            return None, False
+        cur = cur[key]
+    return cur, True
+
+
+def _set_path(d: dict, path: str, value) -> None:
+    cur = d
+    keys = path.split(".")
+    for key in keys[:-1]:
+        cur = cur.setdefault(key, {})
+    cur[keys[-1]] = value
+
+
+def clip_parameter_value(value, spec: tuple[str, float, float]):
+    """Clip a numeric camera/filter parameter to its configured safe range."""
+    if value is None:
+        return None
+
+    kind, lo, hi = spec
+    clipped = min(max(float(value), float(lo)), float(hi))
+    if kind == "int":
+        return int(round(clipped))
+    return round(clipped, 4)
+
+
+def clip_nested_params(params: dict, extra_ranges: dict | None = None) -> dict:
+    ranges = {**PARAMETER_RANGES, **(extra_ranges or {})}
+    clipped = copy.deepcopy(params)
+    for path, spec in ranges.items():
+        value, exists = _get_path(clipped, path)
+        if exists and value is not None:
+            _set_path(clipped, path, clip_parameter_value(value, spec))
+    return clipped
+
+
+def clip_capture_params(params: dict, camera_axes: dict | None = None) -> dict:
+    ranges = {}
+    for path, spec in {**CAPTURE_PARAM_RANGES, **(camera_axes or {})}.items():
+        if path.startswith("capture."):
+            ranges[path.split(".", 1)[1]] = spec
+
+    clipped = dict(params or {})
+    for key, spec in ranges.items():
+        if clipped.get(key) is not None:
+            clipped[key] = clip_parameter_value(clipped[key], spec)
+    return clipped
+
+
+def clip_filter_params(params: dict) -> dict:
+    ranges = {
+        path.split(".", 1)[1]: spec
+        for path, spec in FILTER_AXES.items()
+        if path.startswith("filters.")
+    }
+    clipped = dict(params or {})
+    for key, spec in ranges.items():
+        if clipped.get(key) is not None:
+            clipped[key] = clip_parameter_value(clipped[key], spec)
+    return clipped
 
 # ── Optuna（TPE）設定 ────────────────────────────────────────────────
 OPTUNA_N_STARTUP_TRIALS = 3     # 前幾張用隨機取樣探索，之後才交給 TPE 代理模型決定

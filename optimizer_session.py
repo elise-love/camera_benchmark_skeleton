@@ -40,7 +40,10 @@ class OptunaSession:
                  seed: int = config.OPTUNA_SEED):
         self.axes_def = {**camera_axes, **config.FILTER_AXES}
         self.axes = list(self.axes_def.keys())
-        self.base = copy.deepcopy(base_params or config.DEFAULT_CAMERA_PROFILE)
+        self.base = config.clip_nested_params(
+            copy.deepcopy(base_params or config.DEFAULT_CAMERA_PROFILE),
+            self.axes_def,
+        )
 
         sampler = optuna.samplers.TPESampler(
             seed=seed, n_startup_trials=config.OPTUNA_N_STARTUP_TRIALS)
@@ -60,7 +63,7 @@ class OptunaSession:
             else:
                 val = round(float(trial.suggest_float(path, lo, hi)), 4)
             _set(params, path, val)
-        return params
+        return config.clip_nested_params(params, self.axes_def)
 
     def report(self, objective_score: float) -> None:
         if self._pending_trial is None:
@@ -79,6 +82,7 @@ class OptunaSession:
         best = copy.deepcopy(self.base)
         for path, value in best_trial.params.items():
             _set(best, path, value)
+        best = config.clip_nested_params(best, self.axes_def)
         return {
             "best_params": best,
             "best_score": self.study.best_value,

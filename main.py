@@ -49,7 +49,7 @@ def _bgr_to_rgba(bgr: np.ndarray) -> np.ndarray:
 
 
 def _filter_params_from(candidate: dict) -> FilterParams:
-    f = candidate.get("filters", {})
+    f = config.clip_filter_params(candidate.get("filters", {}))
     return FilterParams(
         brightness=float(f.get("brightness", 0.0)),
         contrast=float(f.get("contrast", 1.0)),

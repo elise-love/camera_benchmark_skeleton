@@ -133,6 +133,7 @@ class CameraKitCamera:
 
     def set_capture(self, params: dict, settle_s: float = 0.6):
         """params 可含 exposure(1-15) / auto_exposure(bool) / white_balance(2200-7500) / auto_wb(bool)。"""
+        params = config.clip_capture_params(params, config.CAMERAKIT_CAMERA_AXES)
         cam = self._cam
         if params.get("auto_exposure") is not None:
             cam.setAutoExposure(bool(params["auto_exposure"]))

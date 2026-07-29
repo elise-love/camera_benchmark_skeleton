@@ -13,6 +13,8 @@ from dataclasses import dataclass, asdict
 
 import cv2
 
+import config
+
 CAPTURE_PROP_MAP: dict[str, int] = {
     "auto_exposure": cv2.CAP_PROP_AUTO_EXPOSURE,
     "exposure":      cv2.CAP_PROP_EXPOSURE,
@@ -57,11 +59,14 @@ def open_camera(index: int = 0) -> cv2.VideoCapture:
 def apply_capture_params(cap: cv2.VideoCapture, params: "CaptureParams | dict",
                          settle_s: float = 0.4) -> dict:
     if isinstance(params, dict):
-        params = CaptureParams.from_dict(params)
+        clipped = config.clip_capture_params(params, config.OPENCV_CAMERA_AXES)
+    else:
+        clipped = config.clip_capture_params(params.to_dict(), config.OPENCV_CAMERA_AXES)
+    params = CaptureParams.from_dict(clipped)
 
     for manual_key, (auto_key, off_val) in AUTO_GUARDS.items():
-        if getattr(params, manual_key) is not None and getattr(params, auto_key) is None:
-            cap.set(CAPTURE_PROP_MAP[auto_key], off_val)
+        if getattr(params, manual_key) is not None:
+            setattr(params, auto_key, off_val)
 
     report: dict[str, dict] = {}
     for key in ("auto_exposure", "auto_wb", "exposure", "white_balance", "gain"):
