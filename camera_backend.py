@@ -23,17 +23,24 @@ class OpenCVBackend:
         return dict(config.OPENCV_CAMERA_AXES)   # 無白平衡搜尋軸
 
     def reference_capture(self):
-        return {"auto_exposure": 0.75, "auto_wb": 1}
+        return dict(config.DEFAULT_CAPTURE_RESETS["opencv"])
 
     def set_capture(self, d: dict, settle_s: float = 0.5):
         safe = config.clip_capture_params(d, self.camera_axes())
         self._cc.apply_capture_params(self.cap, safe, settle_s=settle_s)
+
+    def reset_capture(self, settle_s: float = 1.0):
+        self.set_capture(self.reference_capture(), settle_s=settle_s)
+
+    def restore_capture(self, settle_s: float = 1.0):
+        self.reset_capture(settle_s=settle_s)
 
     def read(self):
         return self.cap.read()
 
     def release(self):
         try:
+            self.reset_capture(settle_s=0.2)
             self.cap.release()
         except Exception:
             pass
@@ -50,17 +57,24 @@ class CameraKitBackend:
         return dict(config.CAMERAKIT_CAMERA_AXES)
 
     def reference_capture(self):
-        return {"auto_exposure": True, "auto_wb": True}
+        return dict(config.DEFAULT_CAPTURE_RESETS["camerakit"])
 
     def set_capture(self, d: dict, settle_s: float = 0.6):
         safe = config.clip_capture_params(d, self.camera_axes())
         self.cam.set_capture(safe, settle_s=settle_s)
+
+    def reset_capture(self, settle_s: float = 1.2):
+        self.set_capture(self.reference_capture(), settle_s=settle_s)
+
+    def restore_capture(self, settle_s: float = 1.2):
+        self.reset_capture(settle_s=settle_s)
 
     def read(self):
         return self.cam.read()
 
     def release(self):
         try:
+            self.reset_capture(settle_s=0.2)
             self.cam.release()
         except Exception:
             pass
@@ -79,9 +93,15 @@ class MockBackend:
         return dict(config.OPENCV_CAMERA_AXES)
 
     def reference_capture(self):
-        return {"auto_exposure": 0.75, "auto_wb": 1}
+        return dict(config.DEFAULT_CAPTURE_RESETS["mock"])
 
     def set_capture(self, d: dict, settle_s: float = 0.0):
+        pass
+
+    def reset_capture(self, settle_s: float = 0.0):
+        pass
+
+    def restore_capture(self, settle_s: float = 0.0):
         pass
 
     def read(self):

@@ -92,6 +92,18 @@ SAFE_CAPTURE_FALLBACKS = {
     },
 }
 
+DEFAULT_CAPTURE_RESETS = {
+    "camerakit": {
+        "auto_exposure": True,
+        "auto_wb": True,
+    },
+    "opencv": {
+        "auto_exposure": 0.75,
+        "auto_wb": 1,
+    },
+    "mock": {},
+}
+
 PARAMETER_RANGES = {
     **CAPTURE_PARAM_RANGES,
     **FILTER_AXES,

@@ -88,6 +88,14 @@ def _safe_capture_fallback(backend) -> dict:
     return config.clip_capture_params(fallback, backend.camera_axes())
 
 
+def _restore_runtime_params(backend, preview: PreviewWindow, settle_s: float = 1.0) -> None:
+    if hasattr(backend, "reset_capture"):
+        backend.reset_capture(settle_s=settle_s)
+    elif hasattr(backend, "restore_capture"):
+        backend.restore_capture(settle_s=settle_s)
+    preview.set_filter_params(FilterParams())
+
+
 def preflight_check(scorer: ScoringClient, backend) -> None:
     """開跑前先確認評分系統至少能回傳一個指標，避免拍到一半才發現評分系統壞掉。"""
     sd.line("評分系統預檢中…", "info")
@@ -184,27 +192,33 @@ def run_user_session(user_id: str, backend, hub: FrameHub, preview: PreviewWindo
 
     sd.banner("USER SESSION START", f"{user_id} 開始", "good")
     sd.line(f"資料會存在：{session.session_dir}", "info")
+    _restore_runtime_params(backend, preview)
 
-    last_capture_time = None
-    for shot_index in range(1, total + 1):
-        if preview.is_quit_requested():
-            sd.line("偵測到 ESC，中止這個 user 的拍攝。", "warn")
-            break
+    shots_taken = 0
+    try:
+        last_capture_time = None
+        for shot_index in range(1, total + 1):
+            if preview.is_quit_requested():
+                sd.line("偵測到 ESC，中止這個 user 的拍攝。", "warn")
+                break
 
-        if last_capture_time is not None:
-            elapsed = time.time() - last_capture_time
-            if elapsed < config.MIN_INTERVAL_SECONDS:
-                remaining = config.MIN_INTERVAL_SECONDS - elapsed
-                sd.line(f"距離上一張還不到 {config.MIN_INTERVAL_SECONDS} 秒，補等 {remaining:.1f} 秒…", "info")
-                time.sleep(remaining)
+            if last_capture_time is not None:
+                elapsed = time.time() - last_capture_time
+                if elapsed < config.MIN_INTERVAL_SECONDS:
+                    remaining = config.MIN_INTERVAL_SECONDS - elapsed
+                    sd.line(f"距離上一張還不到 {config.MIN_INTERVAL_SECONDS} 秒，補等 {remaining:.1f} 秒…", "info")
+                    time.sleep(remaining)
 
-        run_shot(shot_index, total, session, optuna_session, backend, hub, preview, scorer)
-        last_capture_time = time.time()
+            run_shot(shot_index, total, session, optuna_session, backend, hub, preview, scorer)
+            last_capture_time = time.time()
+            shots_taken = shot_index
+    finally:
+        _restore_runtime_params(backend, preview)
 
     best = optuna_session.best()
     session.write_summary({
         "user_id": user_id,
-        "shots_taken": total,
+        "shots_taken": shots_taken,
         "best_params": best["best_params"],
         "best_score": best["best_score"],
         "n_trials": best["n_trials"],
@@ -233,6 +247,7 @@ def main() -> None:
     scorer = build_scorer(use_mock)
 
     time.sleep(1.0)  # 讓 FrameHub 先抓到第一張畫面
+    _restore_runtime_params(backend, preview)
     try:
         if not use_mock:
             preflight_check(scorer, backend)
