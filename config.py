@@ -42,15 +42,15 @@ DEFAULT_CAMERA_PROFILE = {
 }
 
 # ── 參數安全範圍 ─────────────────────────────────────────────────────
-# 這些範圍刻意保守，避免 Optuna 為了追分把照片推到不可用的極端狀態。
+# 這些範圍保留一點實驗對比幅度，但避免 Optuna 為了追分把照片推到不可用的極端狀態。
 # tuple 格式固定為：(型別, 最小值, 最大值)
 OPENCV_CAMERA_AXES = {
-    "capture.exposure": ("float", -8.0, -5.0),
+    "capture.exposure": ("float", -9.0, -4.0),
 }
 
 CAMERAKIT_CAMERA_AXES = {
-    "capture.exposure": ("int", 5, 11),
-    "capture.white_balance": ("int", 3800, 5200),
+    "capture.exposure": ("int", 4, 12),
+    "capture.white_balance": ("int", 3500, 5600),
 }
 
 # 非搜尋軸也要有保護；例如手動載入舊參數或直接呼叫 set_capture() 時仍會套用。
@@ -61,12 +61,12 @@ CAPTURE_PARAM_RANGES = {
 
 # 後製（濾鏡）搜尋軸，與相機後端無關
 FILTER_AXES = {
-    "filters.saturation":  ("float", 0.85, 1.20),
-    "filters.gamma":       ("float", 0.90, 1.20),
-    "filters.brightness":  ("float", -15.0, 15.0),
-    "filters.contrast":    ("float", 0.90, 1.20),
-    "filters.temperature": ("float", -6.0, 6.0),
-    "filters.hue_shift":   ("float", -3.0, 3.0),
+    "filters.saturation":  ("float", 0.80, 1.30),
+    "filters.gamma":       ("float", 0.85, 1.30),
+    "filters.brightness":  ("float", -22.0, 22.0),
+    "filters.contrast":    ("float", 0.85, 1.28),
+    "filters.temperature": ("float", -10.0, 10.0),
+    "filters.hue_shift":   ("float", -5.0, 5.0),
 }
 
 COLOR_HEALTH = {
