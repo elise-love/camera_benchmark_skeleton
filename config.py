@@ -18,7 +18,7 @@ SCORING_SYSTEM_DIR = os.path.join(MODULE_ROOT, "scoring_system")
 IPEVO_CAMERAKIT_DIR = os.path.join(MODULE_ROOT, "IPEVOCameraKit")
 
 # ── 拍照節奏 ──────────────────────────────────────────────────────────
-COUNTDOWN_SECONDS = 10          # 每張拍照前的倒數秒數（畫面 + terminal 都會顯示）
+COUNTDOWN_SECONDS = 1          # 每張拍照前的倒數秒數（畫面 + terminal 都會顯示）
 MIN_INTERVAL_SECONDS = 10       # 兩張照片之間至少間隔幾秒（跟評分/Optuna 處理時間取較長者）
 
 # ── 相機預設值（每個新 user 都從這組「預設值」開始搜尋）───────────────

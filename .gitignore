@@ -18,3 +18,5 @@ __pycache__/
 # 臨時輸出
 *.csv
 *.jsonl
+
+data/
